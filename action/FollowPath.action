@@ -1,0 +1,12 @@
+# Goal
+geometry_msgs/PoseArray path
+float32 total_time
+string drone_id
+---
+# Result
+bool success
+string message
+---
+# Feedback
+geometry_msgs/Pose current_pose
+float32 progress_percent

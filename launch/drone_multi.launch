@@ -1,0 +1,11 @@
+<launch>
+  <!-- Action Server for UAV0 -->
+  <node pkg="drone_control" type="drone_follow_path_server.py" name="uav0_path_server" output="screen">
+    <param name="drone_id" value="uav0"/>
+  </node>
+
+  <!-- Action Server for UAV2 -->
+  <node pkg="drone_control" type="drone_follow_path_server.py" name="uav2_path_server" output="screen">
+    <param name="drone_id" value="uav2"/>
+  </node>
+</launch>
