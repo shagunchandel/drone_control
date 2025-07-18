@@ -4,7 +4,6 @@ import rospy
 import actionlib
 from drone_control.msg import FollowPathAction, FollowPathFeedback, FollowPathResult
 from geometry_msgs.msg import PoseStamped, PoseArray, Twist
-import math
 
 class DronePathFollower:
     def __init__(self, drone_id):
@@ -26,8 +25,7 @@ class DronePathFollower:
         self.current_pose = msg.pose
 
     def move_to_pose(self, target_pose, duration):
-        # Naive move (replace with PID / offboard control for actual use)
-        rospy.sleep(duration)
+        rospy.sleep(duration)  # Replace with OFFBOARD control for real usage
 
     def execute(self, goal):
         path = goal.path.poses
@@ -37,13 +35,11 @@ class DronePathFollower:
 
         if not path or not self.current_pose:
             result.success = False
-            result.message = "No path or current pose unavailable"
+            result.message = "Invalid path or pose unavailable"
             self.server.set_aborted(result)
             return
 
-        num_steps = len(path)
-        time_per_step = total_time / num_steps
-
+        step_time = total_time / len(path)
         for i, pose in enumerate(path):
             if self.server.is_preempt_requested():
                 result.success = False
@@ -51,13 +47,13 @@ class DronePathFollower:
                 self.server.set_preempted(result)
                 return
 
-            self.move_to_pose(pose, time_per_step)
+            self.move_to_pose(pose, step_time)
             feedback.current_pose = pose
-            feedback.progress_percent = float(i + 1) / num_steps * 100.0
+            feedback.progress_percent = (i + 1) / float(len(path)) * 100.0
             self.server.publish_feedback(feedback)
 
         result.success = True
-        result.message = "Path complete"
+        result.message = "Path execution complete"
         self.server.set_succeeded(result)
 
 if __name__ == "__main__":

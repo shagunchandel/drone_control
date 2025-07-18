@@ -1,26 +1,33 @@
-import numpy as np
-from geometry_msgs.msg import PoseArray
+#!/usr/bin/env python
 
-def detect_conflict(path1, path2, min_dist=1.5):
-    length = min(len(path1.poses), len(path2.poses))
-    for i in range(length):
-        p1 = path1.poses[i].position
-        p2 = path2.poses[i].position
-        dist = np.linalg.norm([p1.x - p2.x, p1.y - p2.y, p1.z - p2.z])
-        if dist < min_dist:
-            return True, i
-    return False, -1
+def resolve_conflicts(paths_dict, min_dist=1.5):
+    drone_ids = list(paths_dict.keys())
 
-def resolve_conflicts(paths_dict):
-    keys = list(paths_dict.keys())
-    for i in range(len(keys)):
-        for j in range(i+1, len(keys)):
-            p1 = paths_dict[keys[i]]
-            p2 = paths_dict[keys[j]]
-            conflict, idx = detect_conflict(p1, p2)
-            if conflict:
-                print(f"Conflict at step {idx} between {keys[i]} and {keys[j]}")
-                # e.g., delay drone2
-                p2.poses = [p2.poses[0]] + p2.poses
-                paths_dict[keys[j]] = p2
+    while True:
+        conflict_found = False
+        for i in range(len(drone_ids)):
+            for j in range(i + 1, len(drone_ids)):
+                d1, d2 = drone_ids[i], drone_ids[j]
+                path1, path2 = paths_dict[d1].poses, paths_dict[d2].poses
+                min_len = min(len(path1), len(path2))
+
+                for k in range(min_len):
+                    p1 = path1[k].position
+                    p2 = path2[k].position
+                    dist = ((p1.x - p2.x)**2 + (p1.y - p2.y)**2 + (p1.z - p2.z)**2)**0.5
+                    if dist < min_dist:
+                        print(f"Conflict between {d1} and {d2} at index {k}. Delaying {d2}")
+                        delay_pose = path2[k]
+                        path2.insert(k, delay_pose)
+                        paths_dict[d2].poses = path2
+                        conflict_found = True
+                        break
+                if conflict_found:
+                    break
+            if conflict_found:
+                break
+
+        if not conflict_found:
+            break
+
     return paths_dict
